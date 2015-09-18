@@ -28,7 +28,7 @@ part (Part c) =
             shade = shadow (shadowColor black <> shadowOffset 2.0 2.0 <> shadowBlur 10.0)
 
 snake :: Snake -> Drawing
-snake s = go s 0.0
+snake (Snake s) = go s 0.0
     where go Nil _              = mempty
           go (Cons p ps) offset = translate 0.0 offset (part p) <> go ps (offset + size)
 

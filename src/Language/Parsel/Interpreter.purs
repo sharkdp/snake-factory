@@ -12,16 +12,16 @@ import Language.Parsel.Spec
 import Snake
 
 runPredicate :: Predicate -> Snake -> Boolean
-runPredicate (ShorterThan n) s = length s < n
-runPredicate (LongerThan n) s  = length s > n
+runPredicate (ShorterThan n) (Snake s) = length s < n
+runPredicate (LongerThan n) (Snake s)  = length s > n
 
 runPredicateP :: PredicateP -> Part -> Boolean
 runPredicateP (HasColor c) (Part c') = c == c'
 
 runTransformer :: Transformer -> Snake -> Snake
-runTransformer (Attach c) s  = Cons (Part c) s
-runTransformer (Tail) s      = fromMaybe Nil (tail s)
-runTransformer (FilterP p) s = filter (runPredicateP p) s
+runTransformer (Attach c) (Snake ps)  = Snake $ Cons (Part c) ps
+runTransformer (Tail) (Snake ps)      = Snake $ fromMaybe Nil (tail ps)
+runTransformer (FilterP p) (Snake ps) = Snake $ filter (runPredicateP p) ps
 
 runMachine :: Machine -> List Snake -> List Snake
 runMachine (Filter p)      = filter (runPredicate p)
