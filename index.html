@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Snakes!</title>
+        <meta name="author" content="David Peter">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+
+        <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+            }
+            textarea {
+                background-color: #222;
+                /*color: #F92672;*/
+                color: white;
+                font-family: 'Source Code Pro', courier;
+                font-size: 20px;
+                width: 90%;
+            }
+            pre {
+                font-family: 'Source Code Pro', courier;
+                font-size: 20px;
+            }
+            button {
+                font-size: 20px;
+            }
+            #input { margin: 20px; }
+            #controls { margin: 20px; }
+        </style>
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div id="input">
+<!-- <svg width="400" height="200"> -->
+<!--     <rect rx="5" ry="5" x="10" y="10" width="20" height="20" stroke="black" stroke-width="2" fill="#ff7700" /> -->
+<!--     <rect rx="5" ry="5" x="10" y="30" width="20" height="20" stroke="black" stroke-width="2" fill="#225577" /> -->
+<!--     <rect rx="5" ry="5" x="10" y="50" width="20" height="20" stroke="black" stroke-width="2" fill="#ff7700" /> -->
+<!-- </svg> -->
+            <canvas id="canvas" width="300" height="300"></canvas>
+        </div>
+        <div id="controls">
+            <textarea id="code" rows="5">map (filter (~ red)) &gt;&gt;&gt; filter (&lt; 4) &gt;&gt;&gt; map (attach blue)</textarea>
+            <br>
+            <button id="run">Run!</button>
+        </div>
+        <div id="output"></div>
+<pre>
+(<) :: Int -> Snake -> Boolean
+(>) :: Int -> Snake -> Boolean
+
+(~) :: Color -> Part -> Boolean
+(#) :: Color -> Part -> Boolean
+
+filter (< 10)
+map (map (dropWhile #))
+map (map (takeWhile #) >>> attach red)
+
+mapIf (< 3) (attach red)
+map (mapIf # (color blue))
+
+filter (> 3 || < 5)
+
+map (attach red >>> attach blue)
+</pre>
+        <script type="text/javascript" src="main.js"></script>
+    </body>
+</html>

@@ -1,6 +1,6 @@
 // module Main
 
-exports.clickHandler = function(f) {
+exports.onClick = function(f) {
     return function() {
         document.getElementById("run").addEventListener("click", function () {
             var code = document.getElementById("code").value;

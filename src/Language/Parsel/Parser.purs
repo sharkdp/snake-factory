@@ -23,6 +23,8 @@ import Text.Parsing.StringParser.Combinators
 
 import Language.Parsel.Spec
 
+import Snake
+
 sepWhite :: Parser Unit
 sepWhite = many1 (string " ") *> return unit
 
@@ -44,11 +46,15 @@ parsePredicate =     (try $ bracketed $ string ">" *> skipWhite *> (LongerThan <
                  <|> (try $ bracketed $ string "<" *> skipWhite *> (ShorterThan <$> integer))
                  <?> "Expected valid predicate"
 
-color :: Parser Color
+color :: Parser PartColor
 color = (string "red" *> return Red) <|> (string "blue" *> return Blue)
 
+parsePredicateP :: Parser PredicateP
+parsePredicateP = bracketed $ string "~" *> skipWhite *> (HasColor <$> color)
+
 parseTransformer :: Parser Transformer
-parseTransformer =     (bracketed $ (string "attach" *> sepWhite *> (Attach <$> color)))
+parseTransformer =     (try $ bracketed $ (string "attach" *> sepWhite *> (Attach <$> color)))
+                   <|> (try $ bracketed $ (string "filter" *> sepWhite *> (FilterP <$> parsePredicateP)))
                    <|> (string "tail" *> return Tail)
                    <?> "Expected valid transformer"
 
