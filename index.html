@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Snakes!</title>
+        <title>Snake Factory</title>
         <meta name="author" content="David Peter">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="">
@@ -10,60 +10,82 @@
         <style>
             html, body {
                 margin: 0;
-                padding: 0;
+                padding: 20px;
+            }
+            body, button {
+                font-family: 'PT Sans', sans-serif;
             }
             textarea {
                 background-color: #222;
                 /*color: #F92672;*/
                 color: white;
                 font-family: 'Source Code Pro', courier;
-                font-size: 20px;
-                width: 90%;
+                font-size: 18px;
+                width: 100%;
             }
             pre {
                 font-family: 'Source Code Pro', courier;
-                font-size: 20px;
+                font-size: 14px;
+                background-color: #f0f0f0;
+                border: 2px solid #888;
+                padding: 10px;
+            }
+            #output {
+                font-family: 'Source Code Pro', courier;
+                font-size: 14px;
             }
             button {
                 font-size: 20px;
             }
-            #input { margin: 20px; }
-            #controls { margin: 20px; }
+            table tr td {
+                vertical-align: top;
+            }
         </style>
-        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=PT+Sans:400,700|Source+Code+Pro" rel="stylesheet" type="text/css">
     </head>
     <body>
         <div id="input">
-<!-- <svg width="400" height="200"> -->
-<!--     <rect rx="5" ry="5" x="10" y="10" width="20" height="20" stroke="black" stroke-width="2" fill="#ff7700" /> -->
-<!--     <rect rx="5" ry="5" x="10" y="30" width="20" height="20" stroke="black" stroke-width="2" fill="#225577" /> -->
-<!--     <rect rx="5" ry="5" x="10" y="50" width="20" height="20" stroke="black" stroke-width="2" fill="#ff7700" /> -->
-<!-- </svg> -->
-            <canvas id="canvas" width="600" height="300"></canvas>
+            <table>
+                <tr>
+                    <td>Input:</td>
+                    <td rowspan="2">
+                        <canvas id="canvas" width="750" height="400"></canvas>
+                    </td>
+                </tr>
+                <tr><td>Output:</td></tr>
+            <table>
         </div>
         <div id="controls">
-            <textarea id="code" rows="5">map (filter (~ red)) &gt;&gt;&gt; filter (&lt; 4) &gt;&gt;&gt; map (attach blue)</textarea>
+<textarea autofocus id="code" rows="4">
+    filter (contains yellow)
+>>> map (filter (~ red) >>> attach red)
+>>> filter (> 4)
+</textarea>
             <br>
             <button id="run">Run!</button>
         </div>
-        <div id="output"></div>
+        <h2>Parser output (AST)</h2>
+        <div id="output">Loading ...</div>
+        <h2>Parsel language specification</h2>
 <pre>
-(<) :: Int -> Snake -> Boolean
-(>) :: Int -> Snake -> Boolean
+:machine: = filter (:predicate:)
+          | map (:transformer:)
+          | mapIf (:predicate:) (:transformer:)
+          | :machine: >>> :machine:
 
-(~) :: Color -> Part -> Boolean
-(#) :: Color -> Part -> Boolean
+:predicate: = > :number:
+            | < :number:
+            | contains :color:
 
-filter (< 10)
-map (map (dropWhile #))
-map (map (takeWhile #) >>> attach red)
+:transformer: = attach :color:
+              | filter :predicateP:
+              | tail
+              | :transformer: >>> :transformer:
 
-mapIf (< 3) (attach red)
-map (mapIf # (color blue))
+:predicateP: = = :color:
+             | ~ :color:
 
-filter (> 3 || < 5)
-
-map (attach red >>> attach blue)
+:color: = r(ed) | b(lue) | y(ellow)
 </pre>
         <script type="text/javascript" src="main.js"></script>
     </body>

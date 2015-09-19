@@ -5,21 +5,22 @@ import Data.Generic
 
 import Snake
 
+data Machine = Filter Predicate
+             | Map Transformer
+             | MapIf Predicate Transformer
+             | Compose Machine Machine
+
 data Predicate = LongerThan Int
                | ShorterThan Int
-               | And Predicate Predicate
-               | Or Predicate Predicate
+               | Contains PartColor
 
 data Transformer = Attach PartColor
-                 | Tail
                  | FilterP PredicateP
+                 | Tail
                  | ComposeT Transformer Transformer
 
 data PredicateP = HasColor PartColor
-
-data Machine = Filter Predicate
-             | Map Transformer
-             | Compose Machine Machine
+                | NotColor PartColor
 
 derive instance genericPredicate :: Generic Predicate
 derive instance genericTransformer :: Generic Transformer
@@ -27,3 +28,4 @@ derive instance genericPredicateP :: Generic PredicateP
 derive instance genericMachine :: Generic Machine
 
 instance showMachine :: Show Machine where show = gShow
+instance eqMachine :: Eq Machine where eq = gEq

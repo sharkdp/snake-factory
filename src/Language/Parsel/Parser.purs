@@ -1,5 +1,5 @@
 module Language.Parsel.Parser
-  ( parseMachine
+  ( parseParsel
   ) where
 
 import Prelude
@@ -13,7 +13,7 @@ import Data.Int (fromString)
 import Data.Foldable
 
 import Control.Alt
-import Control.Apply ((*>))
+import Control.Apply
 
 import Control.Monad.Eff
 
@@ -25,15 +25,24 @@ import Language.Parsel.Spec
 
 import Snake
 
+whitespace :: Parser String
+whitespace = string " " <|> string "\n" <|> string "\t"
+
 sepWhite :: Parser Unit
-sepWhite = many1 (string " ") *> return unit
+sepWhite = many1 whitespace *> return unit
 
 skipWhite :: Parser Unit
-skipWhite = many (string " ") *> return unit
+skipWhite = many whitespace *> return unit
 
-bracketed :: forall a. Parser a -> Parser a
-bracketed = between (string "(" *> skipWhite)
-                    (string ")" *> skipWhite)
+enclosed :: forall a. Parser a -> Parser a
+enclosed = between (string "(" *> skipWhite)
+                   (skipWhite *> string ")")
+
+inParens :: forall a. Parser a -> Parser a
+inParens parser = fix \p -> (parser <|> enclosed p)
+
+inParens1 :: forall a. Parser a -> Parser a
+inParens1 = enclosed <<< inParens
 
 integer :: Parser Int
 integer = do
@@ -41,38 +50,52 @@ integer = do
     let str = foldMap C.toString digits
     return $ fromJust (fromString str)
 
+color :: Parser PartColor
+color =     (string "r" *> optional (string "ed") *> return Red)
+        <|> (string "b" *> optional (string "lue") *> return Blue)
+        <|> (string "y" *> optional (string "ellow") *> return Yellow)
+        <?> "Expected valid color name"
+
+comp :: forall a. (a -> a -> a) -> Parser (a -> a -> a)
+comp fn = try $ skipWhite *> string ">>>" *> skipWhite *> return fn
+
 parsePredicate :: Parser Predicate
-parsePredicate =     (try $ bracketed $ string ">" *> skipWhite *> (LongerThan <$> integer))
-                 <|> (try $ bracketed $ string "<" *> skipWhite *> (ShorterThan <$> integer))
+parsePredicate =     (try $ enclosed $ string ">" *> skipWhite *> (LongerThan <$> integer))
+                 <|> (try $ enclosed $ string "<" *> skipWhite *> (ShorterThan <$> integer))
+                 <|> (try $ enclosed $ string "contains" *> sepWhite *> (Contains <$> color))
                  <?> "Expected valid predicate"
 
-color :: Parser PartColor
-color = (string "red" *> return Red) <|> (string "blue" *> return Blue)
-
 parsePredicateP :: Parser PredicateP
-parsePredicateP = bracketed $ string "~" *> skipWhite *> (HasColor <$> color)
+parsePredicateP =     string "=" *> skipWhite *> (HasColor <$> color)
+                  <|> string "~" *> skipWhite *> (NotColor <$> color)
+                  <?> "Expected valid part predicate"
+
+parseTransformerExpr :: Parser Transformer
+parseTransformerExpr =     (string "attach" *> sepWhite *> (Attach <$> color))
+                       <|> (string "filter" *> sepWhite *> (FilterP <$> (inParens1 parsePredicateP)))
+                       <|> (string "tail" *> return Tail)
+                       <?> "Expected valid transformer"
 
 parseTransformer :: Parser Transformer
-parseTransformer =     (try $ bracketed $ (string "attach" *> sepWhite *> (Attach <$> color)))
-                   <|> (try $ bracketed $ (string "filter" *> sepWhite *> (FilterP <$> parsePredicateP)))
-                   <|> (string "tail" *> return Tail)
-                   <?> "Expected valid transformer"
+parseTransformer = inParens1 (chainl1 (inParens parseTransformerExpr) (comp ComposeT))
 
 parseFilter :: Parser Machine
-parseFilter = string "filter" *> sepWhite *> (Filter <$> parsePredicate)
+parseFilter = string "filter" *> sepWhite *> (Filter <$> (inParens parsePredicate))
 
 parseMap :: Parser Machine
 parseMap = string "map" *> sepWhite *> (Map <$> parseTransformer)
 
+parseMapIf :: Parser Machine
+parseMapIf = string "mapIf" *> sepWhite *> (MapIf <$> parsePredicate <*> (sepWhite *> parseTransformer))
+
 parseMachineExpr :: Parser Machine
 parseMachineExpr =     parseFilter
-                   <|> parseMap
+                   <|> try parseMap
+                   <|> parseMapIf
                    <?> "Expected valid Machine"
 
 parseMachine :: Parser Machine
-parseMachine = do
-    ex1 <- parseMachineExpr
-    rest <- optionMaybe (skipWhite *> string ">>>" *> skipWhite *> parseMachine)
-    case rest of
-         Just machine -> return $ Compose ex1 machine
-         Nothing -> return ex1
+parseMachine = skipWhite *> chainl1 parseMachineExpr (comp Compose) <* skipWhite <* eof
+
+parseParsel :: String -> Either ParseError Machine
+parseParsel = runParser parseMachine
